@@ -1,4 +1,6 @@
 import mongoose,{Document,Schema,Model, Types} from 'mongoose';
+import jwt, { Secret } from 'jsonwebtoken';
+import { ENV } from '../config/ENV';
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export interface IUser extends Document{
@@ -29,6 +31,9 @@ export interface IUser extends Document{
 
     createdAt:Date
     updatedAt:Date   
+
+    SignAccessToken: ()=>string
+    SignRefreshToken:()=>string
 
 }
 
@@ -88,6 +93,17 @@ const UserSchema:Schema<IUser> = new mongoose.Schema({
     timestamps:true
 })
 
+UserSchema.methods.SignAccessToken = function(){
+    return jwt.sign({id:this._id},ENV.JWT_SECRET as Secret,{
+        expiresIn:'5m'
+    })
+}
+
+UserSchema.methods.SignRefreshToken = function(){
+    return jwt.sign({id:this._id},ENV.JWT_SECRET as Secret,{
+        expiresIn:'3d'
+    })
+}
 
 const userModel: Model<IUser> = mongoose.model("User",UserSchema);
 

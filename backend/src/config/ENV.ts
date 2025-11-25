@@ -7,5 +7,12 @@ export const ENV = {
     DB_URL:process.env.DB_URL,
     REDIS_URL: process.env.REDIS_URL,
     JWT_SECRET: process.env.JWT_SECRET,
-    
+    HOST: process.env.HOST,
+    PORTNO: process.env.PORTNO,
+    SERVICE: process.env.SERVICE,
+    MAIL: process.env.SMTP_MAIL,
+    PASS: process.env.SMTP_PASS,
+    ACCESS_EXPIRES: process.env.ACCESS_EXPIRES,
+    REFRESH_EXPIRES: process.env.REFRESH_EXPIRES,
+    NODE_ENV: process.env.NODE_ENV
 }
