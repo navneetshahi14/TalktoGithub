@@ -2,13 +2,20 @@ import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/CatchAsync";
 import Errorhandler from "../utils/ErrorHandler";
 import User, { IUser } from "../model/user.model";
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import { ENV } from "../config/ENV";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/sendMail";
 import userModel from "../model/user.model";
 import { comparePass } from "../utils/passhash";
+import {
+  accessTokenOptions,
+  refreshTokenOptions,
+  sendToken,
+} from "../utils/jwt";
+import { redis } from "../utils/redis";
+import { getUserId } from "../service/user.service";
 
 interface IRegister {
   name: string;
@@ -94,31 +101,32 @@ export const activateUser = CatchAsyncError(
     try {
       const { activation_code, activation_token } = req.body;
 
-      const newUser:{user:IUser; activationCode:string} = jwt.verify(
-        activation_token,ENV.JWT_SECRET as string
-      ) as {user:IUser; activationCode:string}
+      const newUser: { user: IUser; activationCode: string } = jwt.verify(
+        activation_token,
+        ENV.JWT_SECRET as string
+      ) as { user: IUser; activationCode: string };
 
-
-      if(newUser.activationCode !== activation_code){
-        return next(new Errorhandler("Invalid authorization token",500))
+      if (newUser.activationCode !== activation_code) {
+        return next(new Errorhandler("Invalid authorization token", 500));
       }
 
-      const {name,email,password} = newUser.user;
+      const { name, email, password } = newUser.user;
 
-      const existUser = await userModel.findOne({email});
+      const existUser = await userModel.findOne({ email });
 
-      if(existUser){
-        return next(new Errorhandler("Email already exist",400))
+      if (existUser) {
+        return next(new Errorhandler("Email already exist", 400));
       }
 
       const user = await userModel.create({
-        name,email,password
-      })
+        name,
+        email,
+        password,
+      });
 
       res.status(200).json({
-        success:true
-      })
-
+        success: true,
+      });
     } catch (err: any) {
       console.log(err.message);
       return next(new Errorhandler(err.message, 400));
@@ -126,36 +134,182 @@ export const activateUser = CatchAsyncError(
   }
 );
 
-
-interface ILoginRequest{
-  email:string
-  password:string
+interface ILoginRequest {
+  email: string;
+  password: string;
 }
 
-export const LoginUser = CatchAsyncError(async(req:Request,res:Response,next:NextFunction)=>{
-  try{
+export const LoginUser = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, password } = req.body as ILoginRequest;
 
-    const {email,password} = req.body
+      if (!email || !password) {
+        return next(new Errorhandler("Please fill all the fields", 404));
+      }
 
-    if(!email || !password){
-      return next(new Errorhandler("Please fill all the fields",404));
+      const user = await userModel.findOne({ email }).select("+password");
+
+      if (!user) {
+        return next(new Errorhandler("User don't exist please register", 400));
+      }
+
+      const passwordmatch = await comparePass(password, user.password);
+
+      if (!passwordmatch)
+        return next(new Errorhandler("Invalid Credentials", 400));
+
+      sendToken(user, 200, res);
+    } catch (err: any) {
+      return next(new Errorhandler(err.message, 500));
     }
-
-    const user = await userModel.findOne({email}).select("+password");
-
-    if(!user)
-    {
-      return next(new Errorhandler("User don't exist please register",400))
-    }
-
-    const passwordmatch = await comparePass(password,user.password);
-
-    if(!passwordmatch) return next(new Errorhandler("Invalid Credentials",400))
-
-
-
-
-  }catch(err:any){
-    return next(new Errorhandler(err.message,500))
   }
-})
+);
+
+export const logoutUser = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      res.cookie("access_token", "", { maxAge: 1 });
+      res.cookie("refresh_token", "", { maxAge: 1 });
+
+      const userId = req.user?._id || "";
+
+      redis.del(userId);
+
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+      });
+    } catch (err: any) {
+      return next(new Errorhandler(err.message, 400));
+    }
+  }
+);
+
+export const updateAccessTokenController = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refresh_token = req.cookies.refresh_token as string;
+
+      const decoded = jwt.verify(
+        refresh_token,
+        ENV.REFRESH_TOKEN as string
+      ) as JwtPayload;
+
+      const message = "Could not refresh token";
+
+      if (!decoded) {
+        return next(new Errorhandler(message, 400));
+      }
+
+      const session = await redis.get(decoded.id as string);
+
+      if (!session) {
+        return next(
+          new Errorhandler(`Please login for access this resource`, 400)
+        );
+      }
+
+      const user = JSON.parse(session);
+      const accessToken = jwt.sign(
+        { id: user._id },
+        ENV.ACCESS_TOKEN as string,
+        {
+          expiresIn: "5m",
+        }
+      );
+
+      const refreshToken = jwt.sign(
+        { id: user._id },
+        ENV.REFRESH_TOKEN as string,
+        {
+          expiresIn: "3d",
+        }
+      );
+
+      req.user = user;
+
+      res.cookie("access_token", accessToken, accessTokenOptions);
+      res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+      await redis.set(user._id, JSON.stringify(user), "EX", 604800);
+
+      res.status(200).json({
+        success: true,
+        accessToken,
+      });
+    } catch (err: any) {
+      return next(new Errorhandler(err.message, 400));
+    }
+  }
+);
+
+export const updateAccessToken = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refresh_token = req.cookies.refresh_token as string;
+
+      const decoded = jwt.verify(
+        refresh_token,
+        ENV.REFRESH_TOKEN as string
+      ) as JwtPayload;
+
+      const message = "Could not refresh token";
+
+      if (!decoded) {
+        return next(new Errorhandler(message, 400));
+      }
+
+      const session = await redis.get(decoded.id as string);
+
+      if (!session) {
+        return next(
+          new Errorhandler(`Please login for access this resource`, 400)
+        );
+      }
+
+      const user = JSON.parse(session);
+      const accessToken = jwt.sign(
+        { id: user._id },
+        ENV.ACCESS_TOKEN as string,
+        {
+          expiresIn: "5m",
+        }
+      );
+
+      const refreshToken = jwt.sign(
+        { id: user._id },
+        ENV.REFRESH_TOKEN as string,
+        {
+          expiresIn: "3d",
+        }
+      );
+
+      req.user = user;
+
+      res.cookie("access_token", accessToken, accessTokenOptions);
+      res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+      await redis.set(user._id, JSON.stringify(user), "EX", 604800);
+
+      next();
+    } catch (err: any) {
+      return next(new Errorhandler(err.message, 500));
+    }
+  }
+);
+
+export const getUserInfo = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?._id || "";
+      getUserId(userId, res);
+    } catch (err: any) {
+      return next(new Errorhandler(err.message, 500));
+    }
+  }
+);
+
+
+
+

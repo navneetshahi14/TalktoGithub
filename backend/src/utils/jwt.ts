@@ -35,7 +35,7 @@ export const sendToken = async(user:IUser,statusCode:number,res:Response) =>{
     const accessToken = user.SignAccessToken()
     const refreshToken = user.SignRefreshToken()
 
-    redis.set(user._id,JSON.stringify(user) as any);
+    redis.set(user._id.toString(),JSON.stringify(user) as any);
 
     if(ENV.NODE_ENV === "production" ){
         accessTokenOptions.secure = true

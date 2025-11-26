@@ -14,5 +14,7 @@ export const ENV = {
     PASS: process.env.SMTP_PASS,
     ACCESS_EXPIRES: process.env.ACCESS_EXPIRES,
     REFRESH_EXPIRES: process.env.REFRESH_EXPIRES,
-    NODE_ENV: process.env.NODE_ENV
+    NODE_ENV: process.env.NODE_ENV,
+    REFRESH_TOKEN: process.env.REFRESH_TOKEN,
+    ACCESS_TOKEN: process.env.ACCESS_TOKEN
 }
