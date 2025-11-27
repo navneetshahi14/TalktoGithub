@@ -17,5 +17,8 @@ export const ENV = {
     NODE_ENV: process.env.NODE_ENV,
     REFRESH_TOKEN: process.env.REFRESH_TOKEN,
     ACCESS_TOKEN: process.env.ACCESS_TOKEN,
-    GITHUB_TOKEN: process.env.GITHUB_TOKEN
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    HF_KEY: process.env.HF_KEY,
 }

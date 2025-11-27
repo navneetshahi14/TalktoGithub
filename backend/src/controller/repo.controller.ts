@@ -4,6 +4,7 @@ import Errorhandler from "../utils/ErrorHandler";
 import { parseGithubUrl } from "../utils/github";
 import { fetchFolderTree, fetchRepoDetails } from "../service/github.service";
 import userModel from "../model/user.model";
+import { generateSWOTFallback } from "../ai/swotFallback";
 
 export const analyzeRepo = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -101,20 +102,51 @@ export const analyzeRepo = CatchAsyncError(
   }
 );
 
+export const folderStructure = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { repoUrl } = req.body as { repoUrl: string };
 
-export const folderStructure = CatchAsyncError(async(req:Request,res:Response,next:NextFunction)=>{
-    const {repoUrl} = req.body as {repoUrl:string}
+    const { owner, name } = parseGithubUrl(repoUrl);
 
-    const {owner,name} = parseGithubUrl(repoUrl);
-
-    const folderTree = await fetchFolderTree(owner,name);
+    const folderTree = await fetchFolderTree(owner, name);
 
     return res.status(200).json({
-        success:true,
-        folderTree:{
-            name:"root",
-            type:"folder",
-            children:folderTree
-        }
-    })
-})
+      success: true,
+      folderTree: {
+        name: "root",
+        type: "folder",
+        children: folderTree,
+      },
+    });
+  }
+);
+
+export const analyzeRepoSWOT = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { repoUrl } = req.body;
+
+    const { owner, name } = parseGithubUrl(repoUrl);
+
+    const repoDetails = await fetchRepoDetails(owner, name);
+    const folderTree = await fetchFolderTree(owner, name);
+
+    const repoData = {
+      metadata: repoDetails.repo,
+      languages: repoDetails.languages,
+      contributors: repoDetails.topContributors,
+      structure: folderTree,
+    };
+
+    const result = await generateSWOTFallback(repoData);
+
+    res.status(200).json({
+      success: true,
+      usedProvider: result.provider,
+      swot: result.swot,
+      repo: repoDetails.repo,
+      languages: repoDetails.languages,
+      contributors: repoDetails.topContributors,
+      folderTree,
+    });
+  }
+);
