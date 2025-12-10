@@ -21,4 +21,5 @@ export const ENV = {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     HF_KEY: process.env.HF_KEY,
+    ACTIVATION_SECRET:process.env.ACTIVATION_SECRET
 }
