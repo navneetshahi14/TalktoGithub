@@ -1,13 +1,17 @@
-import express from 'express'
-import connectDB from './db/db';
-import repoRoute from './route/repo.route';
+import express from "express";
+import cors from "cors";
+import { clerkMiddleware } from "@clerk/express";
+import repositoryRoutes from './modules/repositories/repository.route'
 const app = express();
 
-
-connectDB();
-
+app.use(cors());
 app.use(express.json());
-app.use("/api/repo",repoRoute)
+app.use(clerkMiddleware());
 
+app.use("/api/repositories", repositoryRoutes)
 
-export default app
+app.get("/health", (_, res) => {
+  res.json({ status: "OK" });
+});
+
+export default app;
