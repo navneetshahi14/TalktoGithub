@@ -5,10 +5,16 @@ import { parseGithubUrl } from "../../commons/utils/githubUrl";
 import { filterUsefulFiles } from "../ingestion/fileFilter";
 import { ChunkingService } from "../ingestion/chunking.service";
 import { cleanText } from "../ingestion/textCleaner";
+import { EmbeddingService } from "../embedding/embedding.service";
+import { VectorService } from "../embedding/vector.service";
+import { RepoChatService } from "../chats/repoChat.service";
 
 const githubService = new GithubService();
 const repoService = new RepositoryService();
 const chunkingService = new ChunkingService();
+const embeddingService = new EmbeddingService();
+const vectorService = new VectorService();
+const repoChatService = new RepoChatService();
 
 export class RepositoryController {
   async analyze(req: Request, res: Response, next: NextFunction) {
@@ -95,6 +101,77 @@ export class RepositoryController {
         totalChunks: allChunks.length,
         preview: allChunks.slice(0, 5),
       });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async embedRepo(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { owner, repo } = req.params;
+      const repoId = `${owner}/${repo}`;
+
+      const tree = await githubService.getRepoFileTree(owner, repo);
+      const usefulFiles = filterUsefulFiles(tree).slice(0, 10);
+
+      const storedChunks = [];
+
+      for (const file of usefulFiles) {
+        const content = await githubService.getFileContent(
+          owner,
+          repo,
+          file.path,
+        );
+        if (!content) continue;
+
+        const cleaned = cleanText(content);
+        const chunks = chunkingService.splitText(repoId, file.path, cleaned);
+
+        for (const chunk of chunks) {
+          const embedding = await embeddingService.generateEmbedding(
+            chunk.content,
+          );
+
+          storedChunks.push({
+            ...chunk,
+            embedding,
+          });
+        }
+
+        await vectorService.storeChunks(storedChunks);
+
+        res.json({
+          message: "Embedding generated",
+          totalChunks: storedChunks.length,
+        });
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getSummary(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { owner, repo } = req.params;
+
+      const repoId = `${owner}/${repo}`;
+
+      const summary = await repoChatService.generateRepoSummary(repoId);
+
+      res.json({ summary });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getSwot(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { owner, repo } = req.params;
+      const repoId = `${owner}/${repo}`;
+
+      const swot = await repoChatService.generateSwot(repoId);
+
+      res.json(swot);
     } catch (err) {
       next(err);
     }

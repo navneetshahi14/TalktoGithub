@@ -8,4 +8,5 @@ export default {
     MONGOURI: process.env.DB_URL,
     CLERK_PUBLISH: process.env.CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET: process.env.CLERK_SECRET_KEY,
+    OpenAI_API_KEY: process.env.OPENAI_API_KEY
 }
