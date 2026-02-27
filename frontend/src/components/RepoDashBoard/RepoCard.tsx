@@ -101,7 +101,7 @@ const RepoCard: React.FC<RepoCardProps> = ({
         )}
 
         <Link
-          href={`/dashboard/repo/${name}`}
+          href={`/dashboard/repo/${name}/summary`}
           className="text-sm text-cyan-400 hover:text-cyan-300 transition font-medium"
         >
           Open →

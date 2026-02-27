@@ -38,15 +38,35 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   const params = useParams();
 
   const finalHref = useMemo(() => {
-    if (href.includes("[owner]") && href.includes("[repo]")) {
-      if (!params?.owner || !params?.repo) return null;
-      return href
-        .replace("[owner]", String(params.owner))
-        .replace("[repo]", String(params.repo));
+    if (!href.includes("[owner]") && !href.includes("[repo]")) {
+      return href;
     }
+
+    if (!params?.owner || !params?.repo) {
+      return null; // block link
+    }
+
+    return href
+      .replace("[owner]", String(params.owner))
+      .replace("[repo]", String(params.repo));
   }, [href, params]);
 
-  const isActive = pathname?.startsWith(finalHref as string);
+  const isActive = useMemo(() => {
+    if (!finalHref) return false;
+
+    // Exact match for dashboard root
+    if (finalHref === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+
+    // Exact match for repos list
+    if (finalHref === "/dashboard/repos") {
+      return pathname === "/dashboard/repos";
+    }
+
+    // For dynamic repo routes
+    return pathname?.startsWith(finalHref);
+  }, [pathname, finalHref]);
 
   const IconComponent =
     icon in Icons
@@ -106,7 +126,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
   if (disabled || !finalHref) return content;
 
-  return <Link href={finalHref as string}>{content}</Link>;
+  return <Link href={finalHref}>{content}</Link>;
 };
 
 export default SidebarItem;

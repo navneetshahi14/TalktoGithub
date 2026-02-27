@@ -24,20 +24,20 @@
       repoRequired: true,
       items: [
         {
+          title: "Repository Summary",
+          icon: "FileText",
+          href: "/dashboard/repo/[owner]/[repo]/summary",
+        },
+        {
           title: "AI Chat",
           icon: "MessageSquare",
           href: "/dashboard/repo/[owner]/[repo]/chat",
         },
-        {
-          title: "Repository Summary",
-          icon: "FileText",
-          href: "/dashboard/repo/[owner]/[repo]",
-        },
-        {
-          title: "SWOT Analysis",
-          icon: "Brain",
-          href: "/dashboard/repo/[owner]/[repo]/swot",
-        },
+        // {
+        //   title: "SWOT Analysis",
+        //   icon: "Brain",
+        //   href: "/dashboard/repo/[owner]/[repo]/swot",
+        // },
         {
           title: "Architecture Insight",
           icon: "Network",
@@ -52,17 +52,17 @@
         {
           title: "Analytics",
           icon: "BarChart3",
-          href: "/dashboard/repos/analytics",
+          href: "/dashboard/repo/[owner]/[repo]/metrics/analytics",
         },
         {
           title: "Stars & Forks",
           icon: "Star",
-          href: "/dashboard/repos/stars",
+          href: "/dashboard/repo/[owner]/[repo]/metrics/stars",
         },
         {
           title: "Issues & PRs",
           icon: "GitPullRequest",
-          href: "/dashboard/repos/issues",
+          href: "/dashboard/repo/[owner]/[repo]/metrics/issues",
         },
       ],
     },

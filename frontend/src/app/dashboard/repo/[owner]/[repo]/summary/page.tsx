@@ -8,6 +8,8 @@ import SummaryCard from "@/components/Repos/SummaryCard";
 import SWOTCard from "@/components/Repos/SWOTCard";
 import SideBar from "@/components/SideBar";
 import React from "react";
+import FolderStructureModal from "../../../FolderStructureModal";
+import { treeData } from "@/utils/treeData";
 
 const page = () => {
   const growthData = [
@@ -27,6 +29,9 @@ const page = () => {
   return (
     <>
       <div className="bg-gray-900 rounded p-6 space-y-6 flex-1 transition-all duration-300 m-2 min-h-[92.5vh] ">
+        <div className="flex justify-end">
+          <FolderStructureModal treeData={treeData} />
+        </div>
         <RepoHeader
           name="facebook/react"
           description="A JavaScript library for building user interfaces"

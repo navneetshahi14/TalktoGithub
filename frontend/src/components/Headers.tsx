@@ -6,7 +6,7 @@ const Headers = () => {
   const { user } = useUser();
   return (
     <>
-      <div className="w-full h-[5vh] bg-gray-900 text-[#F6F6F7]  flex justify-between items-center px-5 ">
+      <div className="w-full h-[5vh] bg-gray-900 text-[#F6F6F7]  flex justify-between items-center px-5 drop-shadow-lg">
         {/* logo */}
         <span className="text-sm uppercase font-medium font-poppins">
           Talk2Github
