@@ -128,6 +128,7 @@ export default function FolderGraph({ data }: FolderGraphProps) {
           nodes={nodes}
           edges={edges}
           fitView
+          onlyRenderVisibleElements
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeMouseEnter={(_, node) => {

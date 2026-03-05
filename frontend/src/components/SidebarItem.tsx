@@ -6,7 +6,6 @@ import { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Url } from "next/dist/shared/lib/router/router";
 
 export interface SidebarItemType {
   title: string;
@@ -14,6 +13,7 @@ export interface SidebarItemType {
   href: string;
   badge?: string;
   disabled?: boolean;
+  alwaysEnabled?: boolean;
 }
 
 interface SidebarItemProps {

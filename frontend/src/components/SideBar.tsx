@@ -35,7 +35,7 @@ const SideBar = () => {
       <motion.nav
         animate={{ width: open ? 256 : 64 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="h-[95vh] bg-gray-900 border-t-[1.5px] border-t-gray-800 rounded-r-2xl text-white overflow-hidden"
+        className={`h-[95vh] bg-gray-900 border-t-[1.5px] border-t-gray-800 rounded-r-2xl text-white overflow-hidden `}
       >
         <div className="flex justify-end px-2 py-3">
           <motion.div

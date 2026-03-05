@@ -16,7 +16,7 @@ interface GrowthChartProps {
 
 const GrowthChart: React.FC<GrowthChartProps> = ({ data }) => {
   return (
-    <ResponsiveContainer width="100%" height={250}>
+    <ResponsiveContainer width="100%" height={250} debounce={200}>
       <LineChart data={data}>
         <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
         <XAxis dataKey="month" stroke="#64748b" />

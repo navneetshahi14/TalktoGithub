@@ -16,7 +16,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
   repoRequired = false,
   repoSelected = false,
 }) => {
-  const shouldDisable = repoRequired && !repoSelected;
+  // const shouldDisable = repoRequired && !repoSelected;
 
   return (
     <>
@@ -29,17 +29,21 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({
 
         {/* Items */}
         <div className="flex flex-col gap-1">
-          {items.map((item) => (
-            <SidebarItem
-              key={item.title}
-              title={item.title}
-              icon={item.icon}
-              href={item.href}
-              collapsed={collapsed}
-              badge={item.badge}
-              disabled={shouldDisable}
-            />
-          ))}
+          {items.map((item) => {
+            const shouldDisable =
+              repoRequired && !repoSelected && !item.alwaysEnabled;
+            return (
+              <SidebarItem
+                key={item.title}
+                title={item.title}
+                icon={item.icon}
+                href={item.href}
+                collapsed={collapsed}
+                badge={item.badge}
+                disabled={shouldDisable}
+              />
+            );
+          })}
         </div>
       </div>
     </>

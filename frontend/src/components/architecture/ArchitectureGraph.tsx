@@ -44,9 +44,9 @@ export default function ArchitectureGraph({ layers, connections }: Props) {
 
   return (
     <div className="h-[70vh] bg-black rounded-2xl border border-slate-800">
-      <ReactFlow nodes={nodes} edges={edges} fitView>
+      <ReactFlow nodes={nodes} edges={edges} fitView onlyRenderVisibleElements>
         <Background color="#1e293b" />
-        <Controls />
+        <Controls className="text-black" style={{color:"black"}} />
       </ReactFlow>
     </div>
   );
